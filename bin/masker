@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# 定義使用說明
+usage() {
+  echo "使用方式: masker [選項]"
+  echo ""
+  echo "選項:"
+  echo "  -h, --help      顯示此使用說明"
+  echo "  -c, --clipboard 讀取剪貼簿內容，進行遮蔽後回寫至剪貼簿並預覽"
+  echo ""
+  echo "範例:"
+  echo "  echo 'My ip is 1.1.1.1' | masker    # 處理標準輸入"
+  echo "  masker -c                          # 淨化剪貼簿"
+  exit 0
+}
+
 # 定義正規表示式
 IPV4_REGEX='(\d{1,3}\.){3}\d{1,3}'
 IPV6_REGEX='(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))'
@@ -14,10 +28,17 @@ mask_logic() {
   "
 }
 
-if [[ "$1" == "-c" || "$1" == "--clipboard" ]]; then
-  # 讀取剪貼簿 -> 處理 -> 同時輸出到畫面並回寫剪貼簿
-  pbpaste | mask_logic | tee /dev/tty | pbcopy
-  echo -e "\n\033[0;32m✅ 剪貼簿已淨化！\033[0m"
-else
-  mask_logic "$@"
-fi
+# 參數判斷
+case "$1" in
+  -h|--help)
+    usage
+    ;;
+  -c|--clipboard)
+    pbpaste | mask_logic | tee /dev/tty | pbcopy
+    echo -e "\n\033[0;32m✅ 剪貼簿已淨化！\033[0m"
+    ;;
+  *)
+    # 如果有參數但不是 -c 或 -h，則視為處理檔案，否則處理 stdin
+    mask_logic "$@"
+    ;;
+esac
